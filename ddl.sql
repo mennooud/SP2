@@ -1,15 +1,15 @@
+DROP TABLE IF EXISTS Orderedproducts;
+DROP TABLE IF EXISTS Recommendedproducts;
+DROP TABLE IF EXISTS Viewedproducts;
+DROP TABLE IF EXISTS Events;
+DROP TABLE IF EXISTS Products;
 DROP TABLE IF EXISTS Brands;
 DROP TABLE IF EXISTS Categories;
-DROP TABLE IF EXISTS Events;
 DROP TABLE IF EXISTS Genders;
-DROP TABLE IF EXISTS Orderedproducts;
-DROP TABLE IF EXISTS Products;
-DROP TABLE IF EXISTS Profiles;
-DROP TABLE IF EXISTS Recommendedproducts;
 DROP TABLE IF EXISTS Sessions;
+DROP TABLE IF EXISTS Profiles;
 DROP TABLE IF EXISTS Sub_categories;
 DROP TABLE IF EXISTS Sub_sub_categories;
-DROP TABLE IF EXISTS Viewedproducts;
 
 CREATE TABLE Brands (brandid SERIAL, brand varchar(255), PRIMARY KEY (brandid));
 CREATE TABLE Categories (categoryid SERIAL, category varchar(255) NOT NULL, PRIMARY KEY (categoryid));
@@ -23,7 +23,6 @@ CREATE TABLE Sessions (sessionid varchar(255) NOT NULL, Profilesprofileid varcha
 CREATE TABLE Sub_categories (sub_categoryid SERIAL, sub_category varchar(255) NOT NULL, PRIMARY KEY (sub_categoryid));
 CREATE TABLE Sub_sub_categories (sub_sub_categoryid SERIAL, sub_sub_category varchar(255) NOT NULL, PRIMARY KEY (sub_sub_categoryid));
 CREATE TABLE Viewedproducts (viewedproductid SERIAL, Profilesprofileid varchar(255) NOT NULL, Productsproductid varchar(255) NOT NULL, PRIMARY KEY (viewedproductid));
-
 ALTER TABLE Viewedproducts ADD CONSTRAINT FKViewedprod516306 FOREIGN KEY (Productsproductid) REFERENCES Products (productid);
 ALTER TABLE Viewedproducts ADD CONSTRAINT FKViewedprod836821 FOREIGN KEY (Profilesprofileid) REFERENCES Profiles (profileid);
 ALTER TABLE Recommendedproducts ADD CONSTRAINT FKRecommende637348 FOREIGN KEY (Productsproductid) REFERENCES Products (productid);
