@@ -16,3 +16,7 @@ def makecursor(connection):
 def closeconnection(connection, cursor):
     cursor.close()
     connection.close()
+
+
+def insertdata(cursor, query):
+    cursor.execute(query)
