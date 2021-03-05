@@ -136,5 +136,3 @@ inputproducts(items, connection, cursor, oldtonewproducts)
 # inputsessions(sessions, connection, cursor, oldtonewsessions)
 # inputprofiles(profiles, connection, cursor, oldtonewprofiles)
 PGAdmin.closeconnection(connection, cursor)
-
-#items die bijvoorbeeld geen naam of prijs hebben niet in de nieuwe database zetten
