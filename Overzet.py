@@ -6,11 +6,18 @@ import PGAdmin
 
 
 def inputproducts(items, connection, cursor, newcolumns):
+    '''Deze functie zet meegegeven data in de relationele database op basis van de
+    meegegeven nieuwe kolommen'''
     for item in items:
+        # deze dictionary houdt bij welke waardes in een rij in de 'Products' tabel gaat staan
         productdict = {}
         skip = False
         for key in item.keys():
+            # vergelijkt alle keys met de keys in de meegegeven dictionary om alleen de gevraagde waardes
+            # over te zetten
             if key in newcolumns.keys():
+                # als 'Products' niet in de waarde zit van de meegegeven dictionary betekent dit dat
+                # deze waarde in een andere tabel moet als als foreign key in de 'Products' tabel
                 if 'Products' not in newcolumns[key]:
                     table = newcolumns[key].split('(')[0]
                     returnedvalue = key + 'id'
@@ -22,10 +29,10 @@ def inputproducts(items, connection, cursor, newcolumns):
                         skip = True
                         continue
                     elif item[key] is not None:
-                        cursor.execute(f'insert into {newcolumns[key]} select (%s) where not exists ({selectquery})',
-                                       (item[key], item[key]))
-                        cursor.execute(selectquery, (item[key],))
-                        column = cursor.fetchone()[0]
+                        PGAdmin.insertdata(cursor, f'insert into {newcolumns[key]}'
+                                                   f'select (%s) where not exists ({selectquery})',
+                                           (item[key], item[key]))
+                        column = PGAdmin.getdata(cursor, selectquery, (item[key],))[0]
                     else:
                         column = None
                     productdict[newcolumns[key].replace('(', '').replace(')', '')+'id'] = column
@@ -48,16 +55,17 @@ def inputproducts(items, connection, cursor, newcolumns):
         inputcolumns = ','.join(columns)
         inputvalues = ','.join(['%s']*len(values))
         insertquery = 'insert into Products({}) values ({})'.format(inputcolumns, inputvalues)
-        cursor.execute(insertquery, values)
+        PGAdmin.insertdata(cursor, insertquery, values)
         connection.commit()
 
 
 
 oldtonewproducts = {'_id': 'Products(productid)', 'brand': 'Brands(brand)', 'category': 'Categories(category)',
                     'description': 'Products(description)', 'herhaalaankopen': 'Products(herhaalaankopen)',
-                    'gender': 'Genders(gender)',
-                    'recommendable': 'Products(recommendable)', 'name': 'Products(name)', 'price': 'Products(price)',
-                    'sub_category': 'Sub_categories(sub_category)', 'sub_sub_category': 'Sub_sub_categories(sub_sub_category)'}
+                    'gender': 'Genders(gender)', 'recommendable': 'Products(recommendable)',
+                    'name': 'Products(name)', 'price': 'Products(price)',
+                    'sub_category': 'Sub_categories(sub_category)',
+                    'sub_sub_category': 'Sub_sub_categories(sub_sub_category)'}
 
 client = MongoClient()
 db = client.huwebshop
