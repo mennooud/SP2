@@ -6,28 +6,43 @@ import PGAdmin
 
 
 def inputproducts(items, connection, cursor, newcolumns):
-    for item in items[:100]:
+    for item in items:
         productdict = {}
+        skip = False
         for key in item.keys():
             if key in newcolumns.keys():
                 if 'Products' not in newcolumns[key]:
                     table = newcolumns[key].split('(')[0]
                     returnedvalue = key + 'id'
                     selectquery = f'select {returnedvalue} from {table} where {key}=(%s)'
-                    cursor.execute(f'insert into {newcolumns[key]} select (%s) where not exists ({selectquery})',
-                                   (item[key], item[key]))
-                    cursor.execute(selectquery, (item[key],))
-                    column = cursor.fetchone()[0]
+                    if isinstance(item[key], list):
+                        # een item in de database heeft als waarde voor de category een lijst en die nemen
+                        # wij niet mee
+                        print(f'Item dat niet wordt meegenomen:\n{item}')
+                        skip = True
+                        continue
+                    elif item[key] is not None:
+                        cursor.execute(f'insert into {newcolumns[key]} select (%s) where not exists ({selectquery})',
+                                       (item[key], item[key]))
+                        cursor.execute(selectquery, (item[key],))
+                        column = cursor.fetchone()[0]
+                    else:
+                        column = None
                     productdict[newcolumns[key].replace('(', '').replace(')', '')+'id'] = column
                 else:
                     if key == 'price':
+                        # de kolom 'price' is de enige kolom van de kolommen die we gebruiken
+                        # die als waarde een dictionary heeft
                         productdict[key] = item[key]['selling_price']
                     else:
-                        if type(item[key]) == type(True):
+                        if isinstance(item[key], bool):
+                            # zet een boolean om naar een bit type voor de relationele database
                             value = f'B{int(item[key])}'
                         else:
                             value = item[key]
                         productdict[newcolumns[key].split('(')[1].replace(')', '')] = value
+        if skip:
+            continue
         connection.commit()
         columns, values = list(productdict.keys()), list(productdict.values())
         inputcolumns = ','.join(columns)
