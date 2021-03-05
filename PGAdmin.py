@@ -18,5 +18,12 @@ def closeconnection(connection, cursor):
     connection.close()
 
 
-def insertdata(cursor, query):
-    cursor.execute(query)
+def insertdata(cursor, query, values):
+    cursor.execute(query, values)
+
+
+def getdata(cursor, query, values, fetchone=True):
+    cursor.execute(query, values)
+    if fetchone:
+        return cursor.fetchone()
+    return cursor.fetchall()
