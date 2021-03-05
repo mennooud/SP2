@@ -1,6 +1,5 @@
 from pymongo import MongoClient
 import psycopg2
-
 import MongoDB
 import PGAdmin
 
@@ -78,26 +77,40 @@ def inputsessions(sessions, connection, cursor, newcolumns):
         inputvalues = ','.join(['%s'] * len(values))
         insertquery = 'insert into Sessions({}) values ({})'.format(inputcolumns, inputvalues)
         cursor.execute(insertquery, values)
+        if session['has_sale']:
+            for order in session['order']['products']:
+                orderquery = "insert into orderedproducts (sessionssessionid, productsproductid) " \
+                             "values ('{}', '{}')".format(session['buid'][0], order['id'])
+                cursor.execute(orderquery)
         connection.commit()
 
 
 def inputprofiles(profiles, connection, cursor, newcolumns):
-    for profile in profiles:
+    for profile in profiles[:100]:
         profiledict = {}
         updatedict = {}
         for key in profile.keys():
             if key in newcolumns.keys():
-                value = str(profile[key])
-                profiledict[newcolumns[key]] = value
+                if 'Profiles' in newcolumns[key]:
+                    value = str(profile[key])
+                    profiledict[newcolumns[key]] = value
+                    insertquery = "insert into Profiles values (%s)"
+                    cursor.execute(insertquery, (str(profile['_id']),))
+                elif key == 'previously_recommended':
+                    for product in profile[key]:
+                        recommendquery = "insert into recommendedproducts (profilesprofileid, productsproductid)" \
+                                            "VALUES ('{}', '{}')".format(profile['_id'], product)
+                        cursor.execute(recommendquery)
+
+                else:
+                    for product in profile[key]['viewed_before']:
+                        recommendedquery = "insert into viewedproducts (profilesprofileid, productsproductid)" \
+                                         "VALUES ('{}', '{}')".format(profile['_id'], product)
+                        cursor.execute(recommendedquery)
+                connection.commit()
             else:
                 if key == 'buids':
                     updatedict[value] = (profile[key])
-        connection.commit()
-        columns, values = list(profiledict.keys()), list(profiledict.values())
-        inputcolumns = ','.join(columns)
-        inputvalues = ','.join(['%s'] * len(values))
-        insertquery = 'insert into Profiles({}) values ({})'.format(inputcolumns, inputvalues)
-        cursor.execute(insertquery, values)
         for key, value in updatedict.items():
             if len(value) == 1:
                 updatequery = "update sessions SET profilesprofileid = '{}' WHERE sessionid LIKE '{}'".format(key, str(value[0]))
@@ -118,7 +131,8 @@ oldtonewproducts = {'_id': 'Products(productid)', 'brand': 'Brands(brand)', 'cat
 oldtonewsessions = {'buid': 'sessionid', 'profilesprofileid': '', 'session_start': 'sessionstart',
                     'session_end': 'sessionend', 'has_sale': 'has_sale'}
 
-oldtonewprofiles = {'_id': 'profileid'}
+oldtonewprofiles = {'_id': 'Profiles(profileid)', 'previously_recommended': 'Recommendedproducts(recommended)',
+                    'recommendations': 'Viewedproducts(viewed_before)'}
 
 client = MongoClient()
 db = client.huwebshop
@@ -129,10 +143,9 @@ sessions = MongoDB.getitems(sessioninfo)
 profileinfo = db.profiles
 profiles = MongoDB.getitems(profileinfo)
 
-
 connection = PGAdmin.makeconnection('localhost', 'Recommendation', 'postgres', 'broodje123')
 cursor = PGAdmin.makecursor(connection)
-inputproducts(items, connection, cursor, oldtonewproducts)
-# inputsessions(sessions, connection, cursor, oldtonewsessions)
+# inputproducts(items, connection, cursor, oldtonewproducts)
+inputsessions(sessions, connection, cursor, oldtonewsessions)
 # inputprofiles(profiles, connection, cursor, oldtonewprofiles)
 PGAdmin.closeconnection(connection, cursor)
