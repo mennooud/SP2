@@ -59,7 +59,7 @@ def inputproducts(items, connection, cursor, newcolumns):
 
 
 def inputsessions(sessions, connection, cursor, newcolumns):
-    for session in sessions[:100]:
+    for session in sessions:
         sessiondict = {}
         for key in session.keys():
             if key in newcolumns.keys():
@@ -86,7 +86,7 @@ def inputsessions(sessions, connection, cursor, newcolumns):
 
 
 def inputprofiles(profiles, connection, cursor, newcolumns):
-    for profile in profiles[:100]:
+    for profile in profiles:
         profiledict = {}
         updatedict = {}
         for key in profile.keys():
@@ -145,7 +145,7 @@ profiles = MongoDB.getitems(profileinfo)
 
 connection = PGAdmin.makeconnection('localhost', 'Recommendation', 'postgres', 'broodje123')
 cursor = PGAdmin.makecursor(connection)
-# inputproducts(items, connection, cursor, oldtonewproducts)
+inputproducts(items, connection, cursor, oldtonewproducts)
 inputsessions(sessions, connection, cursor, oldtonewsessions)
-# inputprofiles(profiles, connection, cursor, oldtonewprofiles)
+inputprofiles(profiles, connection, cursor, oldtonewprofiles)
 PGAdmin.closeconnection(connection, cursor)
