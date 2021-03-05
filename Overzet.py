@@ -52,6 +52,54 @@ def inputproducts(items, connection, cursor, newcolumns):
         connection.commit()
 
 
+def inputsessions(sessions, connection, cursor, newcolumns):
+    for session in sessions[:100]:
+        sessiondict = {}
+        for key in session.keys():
+            if key in newcolumns.keys():
+                if key == 'buid':
+                    sessiondict['sessionid'] = session[key][0]
+                else:
+                    if type(session[key]) == type(True):
+                        value = f'B{int(session[key])}'
+                    else:
+                        value = session[key]
+                    sessiondict[newcolumns[key]] = value
+        connection.commit()
+        columns, values = list(sessiondict.keys()), list(sessiondict.values())
+        inputcolumns = ','.join(columns)
+        inputvalues = ','.join(['%s'] * len(values))
+        insertquery = 'insert into Sessions({}) values ({})'.format(inputcolumns, inputvalues)
+        cursor.execute(insertquery, values)
+        connection.commit()
+
+
+def inputprofiles(profiles, connection, cursor, newcolumns):
+    for profile in profiles:
+        profiledict = {}
+        updatedict = {}
+        for key in profile.keys():
+            if key in newcolumns.keys():
+                value = str(profile[key])
+                profiledict[newcolumns[key]] = value
+            else:
+                if key == 'buids':
+                    updatedict[value] = (profile[key])
+        connection.commit()
+        columns, values = list(profiledict.keys()), list(profiledict.values())
+        inputcolumns = ','.join(columns)
+        inputvalues = ','.join(['%s'] * len(values))
+        insertquery = 'insert into Profiles({}) values ({})'.format(inputcolumns, inputvalues)
+        cursor.execute(insertquery, values)
+        for key, value in updatedict.items():
+            if len(value) == 1:
+                updatequery = "update sessions SET profilesprofileid = '{}' WHERE sessionid LIKE '{}'".format(key, str(value[0]))
+                cursor.execute(updatequery)
+            elif len(value) > 1:
+                updatequery = "update sessions SET profilesprofileid = '{}' WHERE sessionid IN {}".format(key, tuple(value))
+                cursor.execute(updatequery)
+        connection.commit()
+
 
 oldtonewproducts = {'_id': 'Products(productid)', 'brand': 'Brands(brand)', 'category': 'Categories(category)',
                     'description': 'Products(description)', 'herhaalaankopen': 'Products(herhaalaankopen)',
@@ -59,14 +107,26 @@ oldtonewproducts = {'_id': 'Products(productid)', 'brand': 'Brands(brand)', 'cat
                     'recommendable': 'Products(recommendable)', 'name': 'Products(name)', 'price': 'Products(price)',
                     'sub_category': 'Sub_categories(sub_category)', 'sub_sub_category': 'Sub_sub_categories(sub_sub_category)'}
 
+oldtonewsessions = {'buid': 'sessionid', 'profilesprofileid': '', 'session_start': 'sessionstart',
+                    'session_end': 'sessionend', 'has_sale': 'has_sale'}
+
+oldtonewprofiles = {'_id': 'profileid'}
+
 client = MongoClient()
 db = client.huwebshop
 collection = db.products
 items = MongoDB.getitems(collection)
+sessioninfo = db.sessions
+sessions = MongoDB.getitems(sessioninfo)
+profileinfo = db.profiles
+profiles = MongoDB.getitems(profileinfo)
+
 
 connection = PGAdmin.makeconnection('localhost', 'Recommendation', 'postgres', 'broodje123')
 cursor = PGAdmin.makecursor(connection)
 inputproducts(items, connection, cursor, oldtonewproducts)
+# inputsessions(sessions, connection, cursor, oldtonewsessions)
+# inputprofiles(profiles, connection, cursor, oldtonewprofiles)
 PGAdmin.closeconnection(connection, cursor)
 
 #items die bijvoorbeeld geen naam of prijs hebben niet in de nieuwe database zetten
