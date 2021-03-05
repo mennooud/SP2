@@ -3,10 +3,9 @@ import psycopg2
 def makeconnection(host, database, user, password):
     '''Deze functie maakt een connectie met een PGAdmin database'''
     connection = psycopg2.connect(
-                    host=host,
-                    database=database,
-                    user=user,
-                    password=password)
+                    database='huwebshop',
+                    user='postgres',
+                    password='1234')
     return connection
 
 
